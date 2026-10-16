@@ -1,7 +1,7 @@
 # behavior_medpc
 
 **Behavioral analysis tools for MedPC files**  
-*MATLAB & (eventually) Python utilities for rodent behavior analysis from Med Associates chambers*
+*MATLAB tools (Python planned) for rodent behavior analysis from Med Associates chambers*
 
 For researchers analyzing **operant conditioning**, **Pavlovian tasks**, **reinforcement schedules**, or any **MedPC behavioral experiment**.
 
@@ -9,20 +9,18 @@ For researchers analyzing **operant conditioning**, **Pavlovian tasks**, **reinf
 
 ## Features
 
-- Read raw MedPC output files into MATLAB and Python structures.
-- Parse sessions and extract trial-by-trial data.
-- Basic utilities to clean and organize MedPC data for further analysis.
-
-*(Note: This project is under active development and the API may change.)*
+- Read raw MedPC output files into MATLAB structures.
+- Parse sessions into trial-by-trial data: trials, events, latencies, bouts.
+- Event histograms and rasters across trials.
 
 ## Requirements
 
 | Dependency | Version | Link |
 |---|---|---|
 | MATLAB | R2020a+ | https://www.mathworks.com |
-| matlab-utilities | `main` (untagged) | https://github.com/Willuhn-Group/matlab-utilities |
+| utilities_matlab | `main` (untagged) | https://github.com/Willuhn-Group/utilities_matlab |
 
-`matlab-utilities` provides `getEntry`, `wfig` and `avg_err_shade`, which
+`utilities_matlab` provides `getEntry`, `wfig` and `avg_err_shade`, which
 `getTrials`, `eventHistogram` and the example script call.
 
 ## Installation
@@ -30,16 +28,48 @@ For researchers analyzing **operant conditioning**, **Pavlovian tasks**, **reinf
 1. Clone this repository and [utilities_matlab](https://github.com/Willuhn-Group/utilities_matlab).
 2. Add both to the MATLAB path:
    ```matlab
-   addpath(genpath('<path to>/medpc-behavior/matlab'));
-   addpath(genpath('<path to>/matlab-utilities'));
+   addpath(genpath('<path to>/behavior_medpc/matlab'));
+   addpath(genpath('<path to>/utilities_matlab'));
    ```
 3. Run `example_use/multipelletExample.m` to check the setup. It stops with a
-   clear message if matlab-utilities is missing.
+   clear message if utilities_matlab is missing.
+
+## Usage
+
+```matlab
+cfg         = [];
+cfg.medFile = fullfile('<path to>', 'my_medpc_file');
+cfg.events  = ...;               % task-specific MedPC event codes
+trialStruct = getTrials(cfg);
+```
+
+The event codes depend on your MedPC program. `example_use/multipelletExample.m`
+walks through the full flow (`readMedpc` → `getTrials` → `addEvent` →
+`extractBouts` / `eventHistogram`) for the multipellet task, using the file in
+`example_data/`.
 
 ## Repository structure
 
-matlab/   	% MATLAB functions to read and parse MedPC files
-example_use/ 	% Example MATLAB scripts using the functions in matlab/
-example_data/ 	% Some MedPC files used in the examples in example_use/
+```
+matlab/        % functions to read and parse MedPC files
+example_use/   % example scripts using the functions in matlab/
+example_data/  % small MedPC files used by the examples
+```
 
-Python versions planned.
+## Status
+
+Under active development: the API may still change. No release yet; the first
+tag will be `v0.1.0`. Project repos should pin a release once it exists.
+
+## Citation
+
+If you use this code, please cite the release you used (see *Releases*).
+
+## License
+
+MIT, see [LICENSE](LICENSE).
+
+## Authors
+
+Sergio Conde-Ocazionez (leader) · Neuromodulation & Behavior Group (Willuhn lab),
+Netherlands Institute for Neuroscience

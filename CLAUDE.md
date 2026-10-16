@@ -1,4 +1,4 @@
-# CLAUDE.md — medpc-behavior
+# CLAUDE.md — behavior_medpc
 
 @../.github/LAB_CONVENTIONS.md
 
@@ -7,10 +7,10 @@
 > before changing anything. Those rules apply here.
 
 ## What this repo is
-- **Type:** general-purpose (used by project repos, e.g. `ephys-induced-polydipsia`)
+- **Type:** general-purpose (used by project repos, e.g. `analysis_ephys_SIP`)
 - **Purpose:** read MedPC (Med Associates) output files and turn them into
   trial-by-trial behavioral data: trials, events, latencies, bouts, histograms.
-- **Maintainer(s):** Sergio Conde-Ocazionez
+- **Leader:** Sergio Conde-Ocazionez (reviews every PR into main)
 - **Current version:** untagged (first tag planned: v0.1.0)
 
 ## Layout
@@ -21,6 +21,7 @@ matlab/
   addEvent.m         % add event times, latencies, first events, bouts per trial
   extractBouts.m     % group timestamps into bouts (minInterval, minDuration)
   eventHistogram.m   % event histograms across trials
+  eventRaster.m      % raster of event times, one row per trial
   medEvents.m        % event extraction helper
 example_use/
   multipelletExample.m   % full walkthrough on example_data/example_rat_multipellet
@@ -38,10 +39,10 @@ The MedPC event codes are task-specific and defined by the user in `cfg.events`
 | Dependency | Version | Why |
 |---|---|---|
 | MATLAB | R2020a+ | — |
-| matlab-utilities | `main` (untagged) | `getEntry`, `wfig`, `avg_err_shade` |
+| utilities_matlab | `main` (untagged) | `getEntry`, `wfig`, `avg_err_shade` |
 
 ## Rules specific to this repo
-- `ephys-induced-polydipsia` calls `getTrials`, `addEvent` and `extractBouts`:
+- `analysis_ephys_SIP` calls `getTrials`, `addEvent` and `extractBouts`:
   keep their inputs and output fields backward compatible.
 - This repo must run on its own: `multipelletExample.m` runs from a fresh clone
   with no edits, once the dependencies listed above are on the MATLAB path.
@@ -49,7 +50,7 @@ The MedPC event codes are task-specific and defined by the user in `cfg.events`
   Dependencies and in the README); dependencies on project repos are not.
 
 ## Known issues / in progress
-- `matlab-utilities` is untagged; pin a tag under Dependencies and in the README
+- `utilities_matlab` is untagged; pin a tag under Dependencies and in the README
   once it has one.
 - `eventHistogram` `checkCfg` falls back to `cfg.og.events` (commented out) and
   sets `cfg.event` instead of `cfg.events` when `cfg.events` is missing.
