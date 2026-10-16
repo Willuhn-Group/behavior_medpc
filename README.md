@@ -27,7 +27,7 @@ For researchers analyzing **operant conditioning**, **Pavlovian tasks**, **reinf
 
 ## Installation
 
-1. Clone this repository and [matlab-utilities](https://github.com/Willuhn-Group/matlab-utilities).
+1. Clone this repository and [utilities_matlab](https://github.com/Willuhn-Group/utilities_matlab).
 2. Add both to the MATLAB path:
    ```matlab
    addpath(genpath('<path to>/medpc-behavior/matlab'));
