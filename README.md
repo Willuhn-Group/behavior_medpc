@@ -1,4 +1,4 @@
-# medpc-behavior
+# behavior_medpc
 
 **Behavioral analysis tools for MedPC files**  
 *MATLAB & (eventually) Python utilities for rodent behavior analysis from Med Associates chambers*
