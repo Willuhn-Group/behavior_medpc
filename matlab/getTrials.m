@@ -34,7 +34,7 @@ function trialStruct = getTrials(cfg)
 %       duration: in s                                                     [double]
 %
 % Example:
-%   cfg = []; cfg.medFile = fullfile(repoRoot, 'example_data', 'example_rat_multipellet');
+%   cfg = []; cfg.medFile = getExampleFile('example_rat_multipellet');
 %   cfg.events.cue1On = 2; cfg.events.cue1Off = 3;
 %   cfg.events.cue4On = 4; cfg.events.cue4Off = 5;
 %   cfg.trialStart = {'cue1On','cue4On'}; cfg.trialEnd = {'cue1Off','cue4Off'};

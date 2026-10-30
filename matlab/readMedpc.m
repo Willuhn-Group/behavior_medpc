@@ -24,7 +24,7 @@ function medpcData = readMedpc(filePath)
 %     <block>: one field per data block (e.g. D, E), with its values       [double]
 %
 % Example:
-%   medpcData = readMedpc(fullfile(repoRoot, 'example_data', 'example_rat_multipellet'));
+%   medpcData = readMedpc(getExampleFile('example_rat_multipellet'));
 %
 % Dependencies: none
 %
