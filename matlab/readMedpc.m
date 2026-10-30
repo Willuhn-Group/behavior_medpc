@@ -1,34 +1,39 @@
 function medpcData = readMedpc(filePath)
-
 % medpcData = readMedpc(filePath)
 %
-% readMedpc extracts the information contained in medPC output
-% files. It looks for every output-block (defined by capital letters 
-% e.g., A:, E:, T:, etc.) and store the data in separate fields of the 
-% output structure.   
+% Reads a MedPC output file: the header information and every data block
+% (A:, B:, ... Z:), each stored in its own field.
 %
 % Inputs:
-%   filePath: full path including medPC file name                           [char]
+%   filePath: full path of the MedPC file                                  [char]
 %
 % Outputs:
-%   medpcData: struct containing the following fields                       [struct]
-%       header: with all the information before the first block output.     [char]
-%       file: File name in header                                           [char]
-%       startDate: Start Date in header                                     [char]
-%       endDate: End Date in header                                         [char]
-%       subject: Subject in header                                          [char]
-%       experiment: Experiment in header                                    [char]
-%       group: Group in header                                              [char]
-%       box: Box in header                                                  [char]
-%       startTime: Start Time in header                                     [char]
-%       endTime: End Time in header                                         [char]
-%       msn: MSN in header                                                  [char]
-%       minutesDuration: session duration in minutes                        [double]
-%       (blockName): multiple fields named after each block (e.g., E, T,    [double]
-%                     etc.), and containig the data in vectors.
+%   medpcData: struct with fields                                          [struct]
+%     header: all the text before the first data block                     [char]
+%     file: File in the header                                             [char]
+%     startDate: Start Date in the header                                  [char]
+%     endDate: End Date in the header                                      [char]
+%     subject: Subject in the header                                       [char]
+%     experiment: Experiment in the header                                 [char]
+%     group: Group in the header                                           [char]
+%     box: Box in the header                                               [char]
+%     startTime: Start Time in the header                                  [char]
+%     endTime: End Time in the header                                      [char]
+%     msn: MSN in the header                                               [char]
+%     minutesDuration: session duration, in minutes                        [double]
+%     <block>: one field per data block (e.g. D, E), with its values       [double]
 %
-% Sergio Conde, Jun 2024. NIN. Willuhn's Lab.
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Example:
+%   medpcData = readMedpc(fullfile(repoRoot, 'example_data', 'example_rat_multipellet'));
+%
+% Dependencies: none
+%
+% Version history:
+%   v0.1  Jun 2024  First version (read_medpc)
+%   v0.2  Aug 2026  Renamed to readMedpc; camelCase names
+%
+% Author(s): Sergio Conde-Ocazionez
+% Neuromodulation & Behavior Laboratory, Netherlands Institute for Neuroscience
 
 fileData = fileread(filePath);                                              % read medPC file
 
@@ -96,8 +101,8 @@ for iblock = 1:length(blockNames)
                     startNumber = cat(2,startNumber,max(spaceFlags));
                 end
                 for inum = 1:length(startNumber)
-                    loc_num   = locLine(startNumber(inum):endNumber(inum));   % cut text number
-                    catEvents = cat(2,catEvents,str2double(loc_num));         % transform to double
+                    locNum   = locLine(startNumber(inum):endNumber(inum));   % cut text number
+                    catEvents = cat(2,catEvents,str2double(locNum));         % transform to double
                 end
             end
         end

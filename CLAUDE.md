@@ -39,7 +39,7 @@ The MedPC event codes are task-specific and defined by the user in `cfg.events`
 | Dependency | Version | Why |
 |---|---|---|
 | MATLAB | R2020a+ | — |
-| utilities_matlab | `main` (untagged) | `getEntry`, `wfig`, `avg_err_shade` |
+| utilities_matlab | `main` (untagged) | `getEntry`, `wfig`, `avgErrorShade` |
 
 ## Rules specific to this repo
 - `analysis_ephys_SIP` calls `getTrials`, `addEvent` and `extractBouts`:
@@ -54,4 +54,5 @@ The MedPC event codes are task-specific and defined by the user in `cfg.events`
   once it has one.
 - `eventHistogram` `checkCfg` falls back to `cfg.og.events` (commented out) and
   sets `cfg.event` instead of `cfg.events` when `cfg.events` is missing.
-- `addEvent`, `eventHistogram`, `extractBouts` and `medEvents` have no help header.
+- `eventRaster` called with a cell instead of a cfg struct (last two sections of
+  `multipelletExample`) stops with "cfg.events is required".

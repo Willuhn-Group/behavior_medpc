@@ -16,9 +16,9 @@ if ~isfolder(fullfile(repoRoot, 'example_data'))
 end
 addpath(fullfile(repoRoot, 'matlab'));
 
-% behavior_medpc uses getEntry, wfig and avg_err_shade from utilities_matlab
+% behavior_medpc uses getEntry, wfig and avgErrorShade from utilities_matlab
 % https://github.com/Willuhn-Group/utilities_matlab
-if ~exist('getEntry', 'file') || ~exist('wfig', 'file') || ~exist('avg_err_shade', 'file')
+if ~exist('getEntry', 'file') || ~exist('wfig', 'file') || ~exist('avgErrorShade', 'file')
     error('multipelletExample:missingDependency', ...
         ['utilities_matlab is not on the MATLAB path.\n' ...
          'Clone https://github.com/Willuhn-Group/utilities_matlab and run addpath(genpath(<its folder>)).']);
