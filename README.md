@@ -20,7 +20,7 @@ For researchers analyzing **operant conditioning**, **Pavlovian tasks**, **reinf
 | MATLAB | R2020a+ | https://www.mathworks.com |
 | utilities_matlab | `main` (untagged) | https://github.com/Willuhn-Group/utilities_matlab |
 
-`utilities_matlab` provides `getEntry`, `wfig` and `avg_err_shade`, which
+`utilities_matlab` provides `getEntry`, `wfig` and `avgErrorShade`, which
 `getTrials`, `eventHistogram` and the example script call.
 
 ## Installation

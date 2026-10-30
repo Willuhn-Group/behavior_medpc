@@ -1,45 +1,57 @@
-
 function trialStruct = getTrials(cfg)
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % trialStruct = getTrials(cfg)
 %
-% getTrials extracts the trials contained in MedPC files 
-% following the user's configuration 
+% Splits a MedPC session into trials and ITIs. Each trial starts with a
+% trialStart event and ends with its trialEnd event; the ITI after it runs
+% until the next trial starts (or the session ends). Times are in seconds
+% from the start of the session.
 %
 % Inputs:
-% cfg: configuration struct containing the following fields                 [struct]
-%   medFile: MedPC output file. It can be a string with the full path
-%   of the file, or the output of the readMedpc function.
-% 
-%   events: struct with fields named after each event and contining the
-%   number used to configure each event in the MedPC
-%   trialStart: name(s) of the events in the events field used to mark the
-%   start of the trial
-%   trialEnd: name(s) of the events used to mark the end of the trial
-%   (optional, default: next trialStart; then events.sessionEnd is required)
-%   trialLabel: label of each trialStart event (optional)
-%   medTime: block with event times (optional, default: 'D')
-%   medEvents: block with event codes (optional, default: 'E')
-% 
+%   cfg: configuration struct with fields                                  [struct]
+%     medFile: MedPC file (full path), or the output of readMedpc          [char/struct]
+%     events: one field per event, named as you like, with the event       [struct]
+%       code used in the MedPC program (e.g. cfg.events.cue1On = 2)
+%     trialStart: event name(s) that start a trial, or their codes         [cell/double]
+%     trialEnd: event name(s) that end a trial, or their codes. If not     [cell/double]
+%       given, each trial ends at the next trialStart and events.sessionEnd
+%       is required (optional)
+%     trialLabel: one label per trialStart event (optional)                [cell]
+%     medTime: MedPC block with the event times (optional, default: 'D')   [char]
+%     medEvents: MedPC block with the event codes (optional, default: 'E') [char]
+%
 % Outputs:
-%   trialStruct: struct with fields cfg, medData and trials. trials contains
-%   the following fields:
-%   * trialLabel: trial type, which is defined by the trialLabel field of the
-%     trial configuration (only if cfg.trialLabel is given).
-%   * interval: interval label. This could be either _trial_ or _iti_ 
-%   * trialStart: label of the event that starts the interval
-%   * trialEnd: label of the event that ends the interval
-%   * count: trial number
-%   * startTime: start time in seconds
-%   * endTime: end time in seconds
-%   * duration: in seconds
-
-% Sergio Conde-Ocazionez, August 2024.
-% v0.2 August 2026
-% Neuromodulation & Behavior Laboratory
-% Netherlands Institute for Neuroscience.
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   trialStruct: struct with fields                                        [struct]
+%     cfg: the configuration, with defaults filled in                      [struct]
+%     medData: output of readMedpc                                          [struct]
+%     trials: one element per trial and ITI, with fields                   [struct]
+%       trialLabel: trial type, from cfg.trialLabel (only if given)        [char]
+%       interval: 'trial' or 'iti'                                         [char]
+%       trialStart: event that starts the interval                         [char]
+%       trialEnd: event that ends the interval                             [char]
+%       count: trial number (an ITI has the number of the trial before it) [double]
+%       startTime: start time, in s                                        [double]
+%       endTime: end time, in s                                            [double]
+%       duration: in s                                                     [double]
+%
+% Example:
+%   cfg = []; cfg.medFile = fullfile(repoRoot, 'example_data', 'example_rat_multipellet');
+%   cfg.events.cue1On = 2; cfg.events.cue1Off = 3;
+%   cfg.events.cue4On = 4; cfg.events.cue4Off = 5;
+%   cfg.trialStart = {'cue1On','cue4On'}; cfg.trialEnd = {'cue1Off','cue4Off'};
+%   cfg.trialLabel = {'1p','4p'};
+%   trialStruct = getTrials(cfg);
+%
+% Dependencies: readMedpc (behavior_medpc), getEntry (utilities_matlab)
+%
+% Version history:
+%   v0.1  Aug 2024  First version (get_trials)
+%   v0.2  Aug 2026  Renamed to getTrials; camelCase names
+%   v0.3  Sep 2026  Configurable time and event blocks (medTime, medEvents);
+%                   without trialEnd, trials end at the next trialStart
+%   v0.4  Oct 2026  Calls readMedpc (read_medpc was renamed)
+%
+% Author(s): Sergio Conde-Ocazionez
+% Neuromodulation & Behavior Laboratory, Netherlands Institute for Neuroscience
 
 MEDSAMPLERATE = 10e-3;
 
@@ -59,8 +71,8 @@ end
 
 eventList = fieldnames(cfg.events);
 idList = [];
-for iev = 1:length(eventList)
-    idList = cat(2,idList,cfg.events.(eventList{iev}));
+for ievent = 1:length(eventList)
+    idList = cat(2,idList,cfg.events.(eventList{ievent}));
 end
 
 if ~iscell(cfg.trialStart)
