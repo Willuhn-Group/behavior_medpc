@@ -28,7 +28,7 @@ function medBehavior = medEvents(cfg)
 %     fileType: 'medpc'                                                    [char]
 %
 % Example:
-%   cfg = []; cfg.file = fullfile(repoRoot, 'example_data', 'example_rat_multipellet');
+%   cfg = []; cfg.file = getExampleFile('example_rat_multipellet');
 %   cfg.events.mag = 16;
 %   cfg.boutEvents.mag.interBout = 1; cfg.boutEvents.mag.minBoutDur = 1;
 %   medBehavior = medEvents(cfg);

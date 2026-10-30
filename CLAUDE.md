@@ -19,10 +19,10 @@ matlab/
   readMedpc.m        % raw MedPC file -> struct
   getTrials.m        % trial/ITI structure from event codes (cfg.events)
   addEvent.m         % add event times, latencies, first events, bouts per trial
-  extractBouts.m     % group timestamps into bouts (minInterval, minDuration)
   eventHistogram.m   % event histograms across trials
   eventRaster.m      % raster of event times, one row per trial
   medEvents.m        % event extraction helper
+  getExampleFile.m   % path to example_data + utilities_matlab check (examples)
 example_use/
   multipelletExample.m   % full walkthrough on example_data/example_rat_multipellet
 example_data/
@@ -39,7 +39,7 @@ The MedPC event codes are task-specific and defined by the user in `cfg.events`
 | Dependency | Version | Why |
 |---|---|---|
 | MATLAB | R2020a+ | — |
-| utilities_matlab | `main` (untagged) | `getEntry`, `wfig`, `avgErrorShade` |
+| utilities_matlab | `main` (untagged) | `getEntry`, `wfig`, `avgErrorShade`, `extractBouts` |
 
 ## Rules specific to this repo
 - `analysis_ephys_SIP` calls `getTrials`, `addEvent` and `extractBouts`:
