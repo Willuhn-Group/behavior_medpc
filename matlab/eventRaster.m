@@ -12,7 +12,8 @@ function rasterData = eventRaster(trials, cfg)
 %     Needs the fields count and startTime (from getTrials) and
 %     <event>Times for each event, so run addEvent with latency = true.
 %     Use getEntry first to plot only some entries (e.g. only ITIs).
-%   cfg: configuration struct with fields                                  [struct]
+%   cfg: configuration struct with fields, or only the event name(s)     [struct/char/cell]
+%     (then the defaults are used, e.g. eventRaster(trials, 'mag'))
 %     events: name or names of the events to plot, as in cfg.events of     [char/cell]
 %       getTrials
 %     sectionBy: trials field that defines the sections, e.g.              [char]
@@ -49,6 +50,7 @@ function rasterData = eventRaster(trials, cfg)
 %
 % Version history:
 %   v0.1  Oct 2026  First version
+%   v0.2  Oct 2026  cfg can be only the event name(s)
 %
 % Author(s): Sergio Conde-Ocazionez
 % Neuromodulation & Behavior Laboratory, Netherlands Institute for Neuroscience
@@ -57,6 +59,9 @@ TICKHEIGHT = 0.8;   % fraction of a row covered by each tick
 
 if isfield(trials, 'trials')
     trials = trials.trials;                     % eventList from addEvent
+end
+if ~isstruct(cfg)
+    cfg = struct('events', {cfg});              % only the event name(s)
 end
 cfg     = checkCfg(cfg, trials);
 events  = cfg.events;
