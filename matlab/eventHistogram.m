@@ -40,7 +40,7 @@ for iEvent = 1:numel(cfg.events)
         else
             wfig;
         end
-        histData.graph = avg_err_shade(plotHist);
+        histData.graph = avgErrorShade(plotHist);
         box off
         xlabel 'Bin Center (s)'
         ylabel 'Event count'
