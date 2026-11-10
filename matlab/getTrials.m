@@ -9,13 +9,15 @@ function trialStruct = getTrials(cfg)
 %
 % Inputs:
 %   cfg: configuration struct with fields                                  [struct]
-%     medFile: MedPC file (full path), or the output of readMedpc          [char/struct]
+%     medFile: MedPC file (full path, char or string), or the output of    [char/struct]
+%       readMedpc
 %     events: one field per event, named as you like, with the event       [struct]
 %       code used in the MedPC program (e.g. cfg.events.cue1On = 2)
-%     trialStart: event name(s) that start a trial, or their codes         [cell/double]
-%     trialEnd: event name(s) that end a trial, or their codes. If not     [cell/double]
-%       given, each trial ends at the next trialStart and events.sessionEnd
-%       is required (optional; not together with trialDuration)
+%     trialStart: event name(s) that start a trial, or their codes   [char/cell/double]
+%     trialEnd: event name(s) that end a trial, or their codes. If   [char/cell/double]
+%       not given, each trial ends at the next trialStart (whichever
+%       trialStart event it is) and the last one at events.sessionEnd,
+%       which is then required (optional; not together with trialDuration)
 %     trialDuration: trial length in s, for tasks where a trial is defined [double]
 %       by time instead of an end event. Each trial runs from its
 %       trialStart for trialDuration s; the ITI runs from there to the
@@ -24,6 +26,13 @@ function trialStruct = getTrials(cfg)
 %     trialLabel: one label per trialStart event (optional)                [cell]
 %     medTime: MedPC block with the event times (optional, default: 'D')   [char]
 %     medEvents: MedPC block with the event codes (optional, default: 'E') [char]
+%
+% getTrials stops with a clear error (id getTrials:<reason>) when a
+% required field is missing, an event name or code is not in cfg.events,
+% trialLabel does not have one label per trialStart event, the time or
+% event block is not in the data, or the trialStart events are not in the
+% file. It warns (getTrials:blockLength) if the time and event blocks have
+% different lengths.
 %
 % Outputs:
 %   trialStruct: struct with fields                                        [struct]
@@ -67,34 +76,22 @@ function trialStruct = getTrials(cfg)
 %                   without trialEnd, trials end at the next trialStart
 %   v0.4  Oct 2026  Calls readMedpc (read_medpc was renamed)
 %   v0.5  Nov 2026  Trials defined by duration (cfg.trialDuration)
+%   v0.6  Nov 2026  Input checks with clear errors; string paths; without
+%                   trialEnd and with several trialStart events, trials end
+%                   at the next trial in time order (could fail before)
 %
 % Author(s): Sergio Conde-Ocazionez
 % Neuromodulation & Behavior Laboratory, Netherlands Institute for Neuroscience
 
 MEDSAMPLERATE = 10e-3;
 
-%---------------------- check the medFile input ----------------------------%
+cfg = checkCfg(cfg);
+
+%-------------------------- load the MedPC data ----------------------------%
 if ischar(cfg.medFile)
     medData = readMedpc(cfg.medFile);
-elseif isstruct(cfg.medFile)
-    % include here something to check if the struct has the right configuration
-    medData = cfg.medFile;
-end
-
-% include defaults for different med_pc configurations, like sample rate
-
-% the medpc output files have the D block which contains the sample number
-% of the ocurrence of each event. This way, the actual time would be sample
-% * 10e-3
-
-eventList = fieldnames(cfg.events);
-idList = [];
-for ievent = 1:length(eventList)
-    idList = cat(2,idList,cfg.events.(eventList{ievent}));
-end
-
-if ~iscell(cfg.trialStart)
-    cfg.trialStart = eventList(ismember(idList,cfg.trialStart));
+else
+    medData = cfg.medFile;                      % output of readMedpc
 end
 
 if isfield(cfg,'trialDuration')
@@ -104,20 +101,17 @@ elseif ~isfield(cfg,'trialEnd')
     cfg.trialEnd = cfg.trialStart;
     noEndFlag = 1;
 else
-    if ~iscell(cfg.trialEnd)
-        cfg.trialEnd = eventList(ismember(idList,cfg.trialEnd));
-    end
     noEndFlag = 0;
 end
 
 if ~isfield(cfg,'medTime')
     cfg.medTime = 'D';
 end
-medTime = medData.(cfg.medTime);
-
 if ~isfield(cfg,'medEvents')
     cfg.medEvents = 'E';
 end
+checkMedData(medData, cfg);
+medTime   = medData.(cfg.medTime);
 medEvents = medData.(cfg.medEvents);
 
 trialStruct.cfg     = cfg;
@@ -135,6 +129,11 @@ end
 [~, sortSample] = sort(startTimes);
 sortStartIds = startIds(sortSample);
 sortStartLabel = cfg.trialStart(startIds);
+if isempty(startTimes)
+    error('getTrials:noTrials', ...
+        'None of the trialStart events (%s) is in the file: there are no trials.', ...
+        strjoin(cfg.trialStart, ', '));
+end
 %---------------------- start event compilation ----------------------------%
 
 %------------------------ end event compilation ----------------------------%
@@ -158,12 +157,25 @@ else
         endIds   = cat(2,endIds,ievent * ones(1,sum(medEvents == eventId)));
     end
     sortEndLabel = cfg.trialEnd(endIds);
+    if isempty(endTimes) && ~noEndFlag
+        error('getTrials:noTrialEnds', 'None of the trialEnd events (%s) is in the file.', ...
+            strjoin(cfg.trialEnd, ', '));
+    end
 end
 %------------------------ end event compilation ----------------------------%
 
 if noEndFlag
-    endTime = medTime(medEvents == cfg.events.sessionEnd);
-    endTimes = [endTimes(2:end) endTime] - 1;
+    % each trial ends 1 sample before the next trial starts (in time order,
+    % whichever trialStart event it is), the last one 1 sample before the
+    % session ends
+    sessionEndTime = medTime(medEvents == cfg.events.sessionEnd);
+    if isempty(sessionEndTime)
+        error('getTrials:noSessionEnd', ...
+            'The sessionEnd event (cfg.events.sessionEnd) is not in the file.');
+    end
+    [sortedStarts, startOrder] = sort(startTimes);
+    endTimes     = [sortedStarts(2:end) sessionEndTime] - 1;
+    sortEndLabel = [sortStartLabel(startOrder(2:end)) repmat({'sessionEnd'}, 1, numel(sessionEndTime))];
 end
 if isfield(cfg,'trialDuration')
     % ends before starts, so a trial that starts exactly when the previous
@@ -217,6 +229,105 @@ if noEndFlag
 end
 if isfield(cfg,'trialDuration')
     checkLastIti(trialStruct.trials);
+end
+
+function cfg = checkCfg(cfg)
+% required fields, event names and codes; returns trialStart and trialEnd
+% as 1 x n cells of event names
+
+if ~isstruct(cfg)
+    error('getTrials:cfg', 'cfg must be a struct (see help getTrials).');
+end
+required = {'medFile', 'events', 'trialStart'};
+missing  = required(~isfield(cfg, required));
+if ~isempty(missing)
+    error('getTrials:missingField', 'cfg.%s is required.', strjoin(missing, ' and cfg.'));
+end
+
+if isstring(cfg.medFile)
+    cfg.medFile = char(cfg.medFile);            % "path" works like 'path'
+end
+if ~ischar(cfg.medFile) && ~isstruct(cfg.medFile)
+    error('getTrials:medFile', ...
+        'cfg.medFile must be the path of a MedPC file or the output of readMedpc.');
+end
+
+if ~isstruct(cfg.events) || isempty(fieldnames(cfg.events))
+    error('getTrials:events', ...
+        'cfg.events must be a struct with one field per event (e.g. cfg.events.cue = 2).');
+end
+eventNames = fieldnames(cfg.events)';
+eventCodes = cellfun(@(name) cfg.events.(name), eventNames, 'UniformOutput', false);
+notNumeric = eventNames(~cellfun(@isnumeric, eventCodes));
+if ~isempty(notNumeric)
+    error('getTrials:events', 'cfg.events.%s must be a MedPC event code (a number).', ...
+        strjoin(notNumeric, ', cfg.events.'));
+end
+
+cfg.trialStart = checkEventNames(cfg.trialStart, 'trialStart', eventNames, eventCodes);
+if isfield(cfg, 'trialEnd')
+    cfg.trialEnd = checkEventNames(cfg.trialEnd, 'trialEnd', eventNames, eventCodes);
+end
+
+if isfield(cfg, 'trialLabel')
+    if ischar(cfg.trialLabel) || isstring(cfg.trialLabel)
+        cfg.trialLabel = cellstr(cfg.trialLabel);
+    end
+    if numel(cfg.trialLabel) ~= numel(cfg.trialStart)
+        error('getTrials:trialLabel', ...
+            'cfg.trialLabel needs one label per trialStart event: %d label(s) for %d event(s) (%s).', ...
+            numel(cfg.trialLabel), numel(cfg.trialStart), strjoin(cfg.trialStart, ', '));
+    end
+end
+
+if ~isfield(cfg, 'trialEnd') && ~isfield(cfg, 'trialDuration') && ~isfield(cfg.events, 'sessionEnd')
+    error('getTrials:missingField', ...
+        ['Without cfg.trialEnd, each trial ends at the next trialStart and the last one at ' ...
+         'the session end: cfg.events.sessionEnd is required.']);
+end
+
+function names = checkEventNames(value, fieldName, eventNames, eventCodes)
+% event name(s) or MedPC code(s) -> 1 x n cell of names in cfg.events
+
+if ischar(value) || isstring(value)
+    value = cellstr(value);
+end
+if iscell(value)
+    unknown = value(~ismember(value, eventNames));
+    if ~isempty(unknown)
+        error('getTrials:unknownEvent', 'cfg.%s: %s is not in cfg.events (events: %s).', ...
+            fieldName, strjoin(unknown, ', '), strjoin(eventNames, ', '));
+    end
+    names = value(:)';
+elseif isnumeric(value)
+    allCodes = cell2mat(cellfun(@(code) code(:)', eventCodes, 'UniformOutput', false));
+    unknown  = value(~ismember(value, allCodes));
+    if ~isempty(unknown)
+        error('getTrials:unknownEvent', 'cfg.%s: code %s is not in cfg.events.', ...
+            fieldName, num2str(unknown(:)'));
+    end
+    names = eventNames(cellfun(@(code) any(ismember(code, value)), eventCodes));
+else
+    error('getTrials:unknownEvent', 'cfg.%s must be event name(s) or MedPC code(s).', fieldName);
+end
+
+function checkMedData(medData, cfg)
+% the time and event blocks must exist in the MedPC data
+
+blockNames = fieldnames(medData);
+blockNames = blockNames(cellfun(@(name) numel(name) == 1, blockNames))';   % A, B, ... Z
+for blockField = {'medTime', 'medEvents'}
+    block = cfg.(blockField{1});
+    if ~isfield(medData, block)
+        error('getTrials:missingBlock', 'The MedPC data has no %s block (cfg.%s). Blocks: %s.', ...
+            block, blockField{1}, strjoin(blockNames, ', '));
+    end
+end
+if numel(medData.(cfg.medTime)) ~= numel(medData.(cfg.medEvents))
+    warning('getTrials:blockLength', ...
+        ['The %s block (times, %d values) and the %s block (event codes, %d values) have ' ...
+         'different lengths; times and codes may not match.'], cfg.medTime, ...
+        numel(medData.(cfg.medTime)), cfg.medEvents, numel(medData.(cfg.medEvents)));
 end
 
 function checkTrialDuration(cfg)
