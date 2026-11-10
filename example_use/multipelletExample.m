@@ -93,13 +93,14 @@ wfig(1); clf
 eventRaster(eventBeh, rasterCfg);
 xline(5, 'r--', 'pellet');
 
-%% trial-based event histogram
+%% trial-based event histogram: magazine entries after the cue (ITI)
 
 histCfg = [];
 histCfg.events = 'mag';
 histCfg.plotFlag = true;
 histCfg.figNumber = 2;
-histCfg.histBins = 0:35;
+histCfg.histBins = 0:1:30;          % 1 s bins; every ITI lasts at least 30 s
+histCfg.select.interval = 'iti';    % 'mag' is only logged outside the cue
 
 histCfg.select.trialLabel = '4p';
 histCfg.color = 'k';
@@ -138,18 +139,12 @@ evConfig.firstEvent = true;
 
 eventBout = addEvent(trialStruct,evConfig);
 
-%% Rastergram of magazine entries: cue + ITI
-evConfig         = [];
-evConfig.events  = {'magCue1','magCue4','mag'};
-evConfig.latency = true;
-eventAll = addEvent(trialStruct,evConfig);
+%% Rastergram of the ITIs only (time 0 = cue offset)
+itiTrials = getEntry(eventBeh.trials,'interval','iti');
 
-wfig(6); clf
-eventRaster(eventAll, {'magCue1','magCue4','mag'});
-xline(5, 'r--', 'pellet');
-
-%% Only the ITIs
-itiTrials = getEntry(eventAll.trials,'interval','iti');
-wfig(7); clf
-eventRaster(itiTrials, 'mag');      % time 0 = cue offset
+rasterCfg           = [];
+rasterCfg.events    = 'mag';
+rasterCfg.sectionBy = 'trialLabel';
+wfig(3); clf
+eventRaster(itiTrials, rasterCfg);
 

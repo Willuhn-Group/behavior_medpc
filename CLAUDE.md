@@ -52,5 +52,3 @@ The MedPC event codes are task-specific and defined by the user in `cfg.events`
 ## Known issues / in progress
 - `utilities_matlab` is untagged; pin a tag under Dependencies and in the README
   once it has one.
-- `eventHistogram` `checkCfg` falls back to `cfg.og.events` (commented out) and
-  sets `cfg.event` instead of `cfg.events` when `cfg.events` is missing.
