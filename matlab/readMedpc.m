@@ -2,7 +2,10 @@ function medpcData = readMedpc(filePath)
 % medpcData = readMedpc(filePath)
 %
 % Reads a MedPC output file: the header information and every data block
-% (A:, B:, ... Z:), each stored in its own field.
+% (A:, B:, ... Z:), each stored in its own field. If MedPC did not close
+% the file after a failed run, the next run is written below it (header and
+% blocks repeated); then only the last run is read, with a warning
+% (readMedpc:multipleRuns).
 %
 % Inputs:
 %   filePath: full path of the MedPC file                                  [char]
@@ -21,21 +24,39 @@ function medpcData = readMedpc(filePath)
 %     endTime: End Time in the header                                      [char]
 %     msn: MSN in the header                                               [char]
 %     minutesDuration: session duration, in minutes                        [double]
+%     nRuns: number of runs in the file (1 normally; more if MedPC wrote   [double]
+%       several runs into the same file, of which only the last is read)
 %     <block>: one field per data block (e.g. D, E), with its values       [double]
 %
 % Example:
 %   medpcData = readMedpc(getExampleFile('example_rat_multipellet'));
+%
+%   % a file with a failed first run and the real run below it: warns,
+%   % reads the second run and returns nRuns = 2
+%   medpcData = readMedpc(getExampleFile('example_rat_multipellet_2runs'));
 %
 % Dependencies: none
 %
 % Version history:
 %   v0.1  Jun 2024  First version (read_medpc)
 %   v0.2  Aug 2026  Renamed to readMedpc; camelCase names
+%   v0.3  Nov 2026  Files with several runs: reads only the last one, warns,
+%                   and returns nRuns
 %
 % Author(s): Sergio Conde-Ocazionez
 % Neuromodulation & Behavior Laboratory, Netherlands Institute for Neuroscience
 
 fileData = fileread(filePath);                                              % read medPC file
+
+% files with several runs %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% each run starts with its own 'File:' header line; keep only the last run,
+% so that the header and the blocks come from the same run
+runStarts = regexp(fileData, '^File:', 'lineanchors');
+nRuns     = max(numel(runStarts), 1);
+if numel(runStarts) > 1
+    fileData = fileData(runStarts(end):end);
+end
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % reads the block's labels %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 blockNames = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';                                 % default block order
@@ -81,6 +102,14 @@ medpcData.msn         = medpcData.header(msnPtr + 5:end);
 startTime = duration(medpcData.startTime);
 endTime = duration(medpcData.endTime);
 medpcData.minutesDuration = minutes(endTime - startTime);
+
+medpcData.nRuns = nRuns;
+if nRuns > 1
+    warning('readMedpc:multipleRuns', ...
+        ['%s contains %d runs; only the last one is read (Start Date %s, ' ...
+         'Start Time %s). Check the file.'], filePath, nRuns, ...
+        strtrim(medpcData.startDate), strtrim(medpcData.startTime));
+end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % reads the data from each block %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

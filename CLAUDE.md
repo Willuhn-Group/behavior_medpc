@@ -26,6 +26,8 @@ matlab/
 example_use/
   multipelletExample.m   % full walkthrough on example_data/example_rat_multipellet
 example_data/
+  example_rat_multipellet        % multipellet session used by the demo
+  example_rat_multipellet_2runs  % simulated file with two runs (failed first run), for readMedpc
 ```
 
 ## Typical flow
