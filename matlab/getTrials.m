@@ -17,7 +17,9 @@ function trialStruct = getTrials(cfg)
 %     trialEnd: event name(s) that end a trial, or their codes. If   [char/cell/double]
 %       not given, each trial ends at the next trialStart (whichever
 %       trialStart event it is) and the last one at events.sessionEnd,
-%       which is then required (optional; not together with trialDuration)
+%       which is then required (optional; not together with trialDuration).
+%       With trialEnd, the last trial gets an ITI up to the session end if
+%       events.sessionEnd is given; otherwise it has no ITI
 %     trialDuration: trial length in s, for tasks where a trial is defined [double]
 %       by time instead of an end event. Each trial runs from its
 %       trialStart for trialDuration s; the ITI runs from there to the
@@ -32,7 +34,8 @@ function trialStruct = getTrials(cfg)
 % trialLabel does not have one label per trialStart event, the time or
 % event block is not in the data, or the trialStart events are not in the
 % file. It warns (getTrials:blockLength) if the time and event blocks have
-% different lengths.
+% different lengths, and (getTrials:longLastIti) if the last ITI, up to the
+% session end, is longer than mean + 2 SD of the other ITIs.
 %
 % Outputs:
 %   trialStruct: struct with fields                                        [struct]
@@ -64,8 +67,7 @@ function trialStruct = getTrials(cfg)
 %   trialStruct = getTrials(cfg);
 %
 % With trialDuration, getTrials stops with an error if a trial starts
-% before the previous one is over, and warns (getTrials:longLastIti) if
-% the last ITI is longer than mean + 2 SD of the other ITIs.
+% before the previous one is over.
 %
 % Dependencies: readMedpc (behavior_medpc), getEntry (utilities_matlab)
 %
@@ -79,6 +81,8 @@ function trialStruct = getTrials(cfg)
 %   v0.6  Nov 2026  Input checks with clear errors; string paths; without
 %                   trialEnd and with several trialStart events, trials end
 %                   at the next trial in time order (could fail before)
+%   v0.7  Nov 2026  With trialEnd and events.sessionEnd, the last trial gets
+%                   an ITI up to the session end (with the longLastIti check)
 %
 % Author(s): Sergio Conde-Ocazionez
 % Neuromodulation & Behavior Laboratory, Netherlands Institute for Neuroscience
@@ -137,6 +141,7 @@ end
 %---------------------- start event compilation ----------------------------%
 
 %------------------------ end event compilation ----------------------------%
+lastIti = isfield(cfg,'trialDuration');         % true when the last trial gets an ITI up to the session end
 if isfield(cfg,'trialDuration')
     % each trial ends trialDuration s after its start; the last ITI ends
     % at the session end
@@ -160,6 +165,24 @@ else
     if isempty(endTimes) && ~noEndFlag
         error('getTrials:noTrialEnds', 'None of the trialEnd events (%s) is in the file.', ...
             strjoin(cfg.trialEnd, ', '));
+    end
+
+    % last ITI: from the last trialEnd to the session end, if the session
+    % end is defined (otherwise the last trial has no ITI)
+    if ~noEndFlag && isfield(cfg.events,'sessionEnd')
+        sessionEndTime = max(medTime(medEvents == cfg.events.sessionEnd));
+        if isempty(sessionEndTime)
+            warning('getTrials:noLastIti', ...
+                'The sessionEnd event (cfg.events.sessionEnd) is not in the file: the last trial has no ITI.');
+        elseif sessionEndTime < max(endTimes)
+            error('getTrials:sessionEndBeforeTrialEnd', ...
+                'The session ends (%.2f s) before the last trial does (%.2f s). Check the file or cfg.trialEnd.', ...
+                sessionEndTime * MEDSAMPLERATE, max(endTimes) * MEDSAMPLERATE);
+        else
+            endTimes     = [endTimes sessionEndTime];
+            sortEndLabel = [sortEndLabel(:)' {'sessionEnd'}];
+            lastIti      = true;
+        end
     end
 end
 %------------------------ end event compilation ----------------------------%
@@ -227,7 +250,7 @@ trialStruct.trials = cell2struct(intervalCell,intervalFields,2);
 if noEndFlag
     trialStruct.trials = getEntry(trialStruct.trials,'interval','trial');
 end
-if isfield(cfg,'trialDuration')
+if lastIti
     checkLastIti(trialStruct.trials);
 end
 
