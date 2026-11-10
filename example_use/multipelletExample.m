@@ -87,7 +87,6 @@ eventBeh = addEvent(trialStruct,evConfig);
 rasterCfg           = [];
 rasterCfg.events    = {'magCue1','magCue4','mag'};
 rasterCfg.sectionBy = 'trialLabel';                 % 1p at the bottom, 4p on top
-rasterCfg.colors    = [0 .45 .74; 0 .45 .74; 0 0 0]; % cue entries blue, ITI entries black
 
 wfig(1); clf
 eventRaster(eventBeh, rasterCfg);

@@ -51,6 +51,7 @@ function rasterData = eventRaster(trials, cfg)
 % Version history:
 %   v0.1  Oct 2026  First version
 %   v0.2  Oct 2026  cfg can be only the event name(s)
+%   v0.3  Nov 2026  Legend lists only the events (not lines added afterwards)
 %
 % Author(s): Sergio Conde-Ocazionez
 % Neuromodulation & Behavior Laboratory, Netherlands Institute for Neuroscience
@@ -161,7 +162,8 @@ box off
 
 drawn = isgraphics(lineHandles);
 if isfield(cfg, 'sectionBy') && sum(drawn) > 1     % colors are per event: name them
-    legend(lineHandles(drawn), events(drawn), 'Interpreter', 'none', 'Location', 'eastoutside')
+    legend(lineHandles(drawn), events(drawn), 'Interpreter', 'none', 'Location', 'eastoutside', ...
+        'AutoUpdate', 'off')                       % lines drawn later (xline...) stay out
 end
 
 if ~holdState
