@@ -147,3 +147,28 @@ rasterCfg.sectionBy = 'trialLabel';
 wfig(3); clf
 eventRaster(itiTrials, rasterCfg);
 
+
+%% Trials defined by duration instead of an end event
+% Many tasks define a trial by time rather than by an end event. With
+% cfg.trialDuration, each trial runs from its trialStart for that many
+% seconds; the ITI runs from there to the next trialStart, or to
+% events.sessionEnd for the last trial. In this example, trials of 30 s
+% from cue onset (cfg.trialEnd above uses cue offset to show short trials).
+% getTrials warns here that the last ITI is much longer than the others:
+% this session ends about 35 s after the last trial.
+
+durCfg               = rmfield(cfg, 'trialEnd');   % trialEnd and trialDuration exclude each other
+durCfg.trialDuration = 30;                         % s
+trialStructDur = getTrials(durCfg);
+
+evConfig         = [];
+evConfig.events  = {'magCue1','magCue4','mag'};
+evConfig.latency = true;
+eventDur = addEvent(trialStructDur,evConfig);
+
+rasterCfg           = [];
+rasterCfg.events    = {'magCue1','magCue4','mag'};
+rasterCfg.sectionBy = 'trialLabel';
+wfig(4); clf
+eventRaster(eventDur, rasterCfg);
+xline(durCfg.trialDuration, 'k--', 'trial end');
