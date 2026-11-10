@@ -61,6 +61,9 @@ cfg.trialEnd   = {'cue1Off','cue4Off'};
 % This struct is the backbone of the analysis. The times listed in this structure 
 % will be the reference to the trial based analysis: counting behavioral events, 
 % latencies, etc.
+% The last trial's ITI runs to the session end (cfg.events.sessionEnd). In
+% this session that ITI is about twice as long as the others, so getTrials
+% warns about it (getTrials:longLastIti).
 
 trialStruct = getTrials(cfg);
 
